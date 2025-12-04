@@ -127,16 +127,18 @@ function App() {
       <main>
         {renderPage()}
       </main>
-      <div class={styles.versionBadge}>
-        {buildLink() ? (
-          <a href={buildLink()} target="_blank" rel="noreferrer">
-            Ver. {buildVersion() || '...'}
-          </a>
-        ) : (
-          <>Ver. {buildVersion() || '...'}
-          </>
-        )}
-      </div>
+      {currentPage() === 'home' && (
+        <div class={styles.versionBadge}>
+          {buildLink() ? (
+            <a href={buildLink()} target="_blank" rel="noreferrer">
+              Ver. {buildVersion() || '...'}
+            </a>
+          ) : (
+            <>Ver. {buildVersion() || '...'}
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ import styles from './SimpleCite.module.css';
 
 type Guideline = 'apa7' | 'mla9' | 'ieee' | 'chicago17';
 type CiteEngine = 'simplecite' | 'manual';
+type LoadingStage = 'idle' | 'metadata' | 'metadataProxy' | 'ai';
 
 interface Metadata {
   title: string;
@@ -15,6 +16,11 @@ interface Metadata {
   publisher: string;
   url: string;
   accessed: string;
+}
+
+interface CitationResult {
+  text: string;
+  html: string;
 }
 
 const emptyMeta: Metadata = {
@@ -85,6 +91,45 @@ const formatAccessedDate = (value?: string) => {
   return `${monthNames[parsed.getMonth()]} ${parsed.getDate()}, ${parsed.getFullYear()}`;
 };
 
+const formatPublishedDate = (value?: string) => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    if (/^\d{4}$/.test(trimmed)) {
+      return `${parsed.getFullYear()}`;
+    }
+    const month = monthNames[parsed.getMonth()];
+    const day = parsed.getDate();
+    return `${month} ${day}, ${parsed.getFullYear()}`;
+  }
+  return trimmed;
+};
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const escapeAttribute = (value: string) => escapeHtml(value);
+
+const linkHtml = (url: string) =>
+  `<a href="${escapeAttribute(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a>`;
+
+const buildCitationResult = (
+  textParts: string[],
+  htmlParts: string[],
+  fallbackText: string,
+  fallbackHtml?: string,
+): CitationResult => {
+  const text = joinCitationParts(textParts, fallbackText);
+  const html = joinCitationParts(htmlParts, fallbackHtml || escapeHtml(fallbackText));
+  return { text, html };
+};
+
 const MAX_CONTEXT_CHARS = 1200;
 
 const sanitizeContext = (value: string) =>
@@ -138,6 +183,125 @@ const normalizeMetadata = (data: Partial<Metadata> | null | undefined): Partial<
   return cleaned;
 };
 
+const hasMeaningfulMetadata = (data: Partial<Metadata> | null | undefined) => {
+  if (!data) return false;
+  return Boolean(data.title || data.author || data.site || data.publisher);
+};
+
+const hostnameFromUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname.replace(/^www\./i, '');
+  } catch {
+    return '';
+  }
+};
+
+const parseHtmlMetadata = (html: string, originalUrl: string): Partial<Metadata> => {
+  if (typeof DOMParser === 'undefined') return {};
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const getMeta = (selectors: string[]) => {
+    for (const selector of selectors) {
+      const node = doc.querySelector(selector);
+      const content = node?.getAttribute('content') || node?.getAttribute('value');
+      if (content && content.trim()) return content.trim();
+    }
+    return '';
+  };
+  const getText = (selectors: string[]) => {
+    for (const selector of selectors) {
+      const text = doc.querySelector(selector)?.textContent?.trim();
+      if (text) return text;
+    }
+    return '';
+  };
+
+  const title =
+    getMeta([
+      'meta[property="og:title"]',
+      'meta[name="twitter:title"]',
+      'meta[name="title"]',
+      'meta[itemprop="headline"]',
+    ]) || getText(['title', 'h1']);
+
+  const author = getMeta([
+    'meta[name="author"]',
+    'meta[property="article:author"]',
+    'meta[name="article:author"]',
+    'meta[name="byl"]',
+    'meta[name="dc.creator"]',
+    'meta[name="citation_author"]',
+  ]);
+
+  const publisher =
+    getMeta([
+      'meta[name="publisher"]',
+      'meta[property="article:publisher"]',
+      'meta[name="citation_publisher"]',
+      'meta[name="organization"]',
+    ]) || getMeta(['meta[name="application-name"]']);
+
+  const site =
+    getMeta([
+      'meta[property="og:site_name"]',
+      'meta[name="application-name"]',
+    ]) || hostnameFromUrl(originalUrl);
+
+  const publishedRaw =
+    getMeta([
+      'meta[property="article:published_time"]',
+      'meta[name="pubdate"]',
+      'meta[name="date"]',
+      'meta[name="dcterms.created"]',
+      'meta[itemprop="datePublished"]',
+    ]) || doc.querySelector('time[datetime]')?.getAttribute('datetime')?.trim() || '';
+
+  const result: Partial<Metadata> = {
+    title,
+    author,
+    publisher,
+    site,
+    year: publishedRaw,
+    url: originalUrl,
+  };
+
+  return normalizeMetadata(result);
+};
+
+const proxiedUrl = (target: string) =>
+  `https://anything.rhenrywarren.workers.dev/?url=${encodeURIComponent(target)}`;
+
+const fetchPageHtml = async (target: string) => {
+  try {
+    const response = await fetch(target, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+      },
+    });
+    if (!response.ok) return null;
+    const contentType = response.headers.get('content-type');
+    if (contentType && !/text\/(html|plain)/i.test(contentType)) return null;
+    return await response.text();
+  } catch (error) {
+    console.warn('Metadata fetch failed for', target, error);
+    return null;
+  }
+};
+
+const gatherMetadataFromSource = async (targetUrl: string, useProxy = false) => {
+  const source = useProxy ? proxiedUrl(targetUrl) : targetUrl;
+  const html = await fetchPageHtml(source);
+  if (!html) {
+    return { meta: null as Partial<Metadata> | null, blocked: true };
+  }
+  const parsed = parseHtmlMetadata(html, targetUrl);
+  return {
+    meta: hasMeaningfulMetadata(parsed) ? parsed : null,
+    blocked: false,
+  };
+};
+
 const buildMetadataPrompt = (context: string, url: string) =>
   [
     'You are a meticulous citation metadata extractor.',
@@ -146,6 +310,20 @@ const buildMetadataPrompt = (context: string, url: string) =>
     `Context: ${context}`,
     `URL: ${url}`,
   ].join('\n');
+
+const mergeMetadataWithDefaults = (data: Partial<Metadata>, targetUrl: string): Metadata => {
+  const now = new Date();
+  const accessed = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate(),
+  ).padStart(2, '0')}`;
+  return {
+    ...emptyMeta,
+    ...data,
+    url: data.url || targetUrl,
+    year: data.year || now.getFullYear().toString(),
+    accessed: data.accessed || accessed,
+  };
+};
 
 const normalizeWhitespace = (value: string) => value.replace(/\s+/g, ' ').trim();
 
@@ -230,67 +408,92 @@ const formatAuthorsChicago = (authors: string[]) => {
   return `${formatMlaName(authors[0], true)} et al.`;
 };
 
-const formatCitation = (meta: Metadata, guideline: Guideline) => {
+const formatCitation = (meta: Metadata, guideline: Guideline): CitationResult => {
   const authors = parseAuthors(meta.author);
   const fallbackTitle = meta.title || meta.site || meta.publisher || meta.url || 'Untitled work';
   const accessed = formatAccessedDate(meta.accessed);
-  const year = meta.year?.trim();
+  const published = formatPublishedDate(meta.year);
+  const fallbackText = meta.url || fallbackTitle;
+  const fallbackHtml = meta.url ? linkHtml(meta.url) : escapeHtml(fallbackTitle);
+  const textParts: string[] = [];
+  const htmlParts: string[] = [];
+  const push = (text: string, html?: string) => {
+    if (!text || !text.trim()) return;
+    textParts.push(text.trim());
+    htmlParts.push(html || escapeHtml(text.trim()));
+  };
 
   if (guideline === 'apa7') {
     const authorSegment = formatAuthorsAPA(authors);
-    const parts = [
-      authorSegment ? `${authorSegment}.` : '',
-      year ? `(${year}).` : '(n.d.).',
+    if (authorSegment) push(`${authorSegment}.`);
+    push(published ? `(${published}).` : '(n.d.).');
+    push(
       `${fallbackTitle}.`,
-      meta.site ? `${meta.site}.` : '',
-      meta.publisher && meta.publisher !== meta.site ? `${meta.publisher}.` : '',
-      meta.url
-        ? meta.accessed
-          ? `Retrieved ${accessed} from ${meta.url}.`
-          : `Retrieved from ${meta.url}.`
-        : '',
-    ];
-    return joinCitationParts(parts, meta.url);
+      fallbackTitle ? `<i>${escapeHtml(fallbackTitle)}</i>.` : undefined,
+    );
+    if (meta.site) push(`${meta.site}.`);
+    if (meta.publisher && meta.publisher !== meta.site) push(`${meta.publisher}.`);
+    if (meta.url) {
+      if (accessed) {
+        const text = `Retrieved ${accessed} from ${meta.url}.`;
+        const html = `Retrieved ${escapeHtml(accessed)} from ${linkHtml(meta.url)}.`;
+        push(text, html);
+      } else {
+        push(`Retrieved from ${meta.url}.`, `Retrieved from ${linkHtml(meta.url)}.`);
+      }
+    }
+    return buildCitationResult(textParts, htmlParts, fallbackText, fallbackHtml);
   }
 
   if (guideline === 'mla9') {
     const authorSegment = formatAuthorsMLA(authors);
-    const parts = [
-      authorSegment ? `${authorSegment}.` : '',
+    if (authorSegment) push(`${authorSegment}.`);
+    push(
       `"${fallbackTitle}."`,
-      meta.site ? `${meta.site},` : '',
-      meta.publisher ? `${meta.publisher},` : '',
-      year ? `${year},` : '',
-      meta.url ? `${meta.url}.` : '',
-      accessed ? `Accessed ${accessed}.` : '',
-    ];
-    return joinCitationParts(parts, meta.url);
+      fallbackTitle ? `&ldquo;${escapeHtml(fallbackTitle)}.&rdquo;` : undefined,
+    );
+    if (meta.site) {
+      push(`${meta.site},`, `<i>${escapeHtml(meta.site)}</i>,`);
+    }
+    if (meta.publisher) push(`${meta.publisher},`);
+    if (published) push(`${published},`);
+    if (meta.url) push(`${meta.url}.`, `${linkHtml(meta.url)}.`);
+    if (accessed) push(`Accessed ${accessed}.`, `Accessed ${escapeHtml(accessed)}.`);
+    return buildCitationResult(textParts, htmlParts, fallbackText, fallbackHtml);
   }
 
   if (guideline === 'ieee') {
     const authorSegment = formatAuthorsIEEE(authors);
-    const parts = [
-      authorSegment ? `${authorSegment},` : '',
+    if (authorSegment) push(`${authorSegment},`);
+    push(
       `"${fallbackTitle},"`,
-      meta.site ? `${meta.site},` : '',
-      year ? `${year}.` : '',
-      '[Online].',
-      meta.url ? `Available: ${meta.url}.` : '',
-      accessed ? `Accessed: ${accessed}.` : '',
-    ];
-    return joinCitationParts(parts, meta.url);
+      fallbackTitle ? `&ldquo;${escapeHtml(fallbackTitle)},&rdquo;` : undefined,
+    );
+    if (meta.site) push(`${meta.site},`);
+    if (published) push(`${published}.`);
+    push('[Online].');
+    if (meta.url) push(`Available: ${meta.url}.`, `Available: ${linkHtml(meta.url)}.`);
+    if (accessed) push(`Accessed: ${accessed}.`, `Accessed: ${escapeHtml(accessed)}.`);
+    return buildCitationResult(textParts, htmlParts, fallbackText, fallbackHtml);
   }
 
   const authorSegment = formatAuthorsChicago(authors);
-  const parts = [
-    authorSegment ? `${authorSegment}.` : '',
-    year ? `${year}.` : '',
-    `"${fallbackTitle}."`,
-    meta.site ? `${meta.site}.` : '',
-    meta.publisher ? `${meta.publisher}.` : '',
-    meta.url ? (accessed ? `${meta.url} (accessed ${accessed}).` : `${meta.url}.`) : '',
-  ];
-  return joinCitationParts(parts, meta.url);
+  if (authorSegment) push(`${authorSegment},`);
+  push(
+    `"${fallbackTitle},"`,
+    fallbackTitle ? `&ldquo;${escapeHtml(fallbackTitle)},&rdquo;` : undefined,
+  );
+  if (meta.site) {
+    push(`${meta.site},`, `<i>${escapeHtml(meta.site)}</i>,`);
+  }
+  if (published) push(`${published},`);
+  if (meta.publisher) push(`${meta.publisher},`);
+  if (meta.url) {
+    const urlSegment = `${meta.url}`;
+    push(urlSegment, linkHtml(meta.url));
+  }
+  if (accessed) push(`Accessed ${accessed}.`, `Accessed ${escapeHtml(accessed)}.`);
+  return buildCitationResult(textParts, htmlParts, fallbackText, fallbackHtml);
 };
 
 const guidelineLabel = (value: string) =>
@@ -303,8 +506,23 @@ const SimpleCite: Component = () => {
   const [meta, setMeta] = createSignal<Metadata>({ ...emptyMeta });
   const [status, setStatus] = createSignal('');
   const [loading, setLoading] = createSignal(false);
+  const [loadingStage, setLoadingStage] = createSignal<LoadingStage>('idle');
   const [citations, setCitations] = createSignal<Citation[]>([]);
   const [modalOpen, setModalOpen] = createSignal(false);
+
+  const loadingLabel = () => {
+    if (!loading()) return 'Fetch metadata';
+    const stage = loadingStage();
+    if (stage === 'metadata') return 'Getting metadata…';
+    if (stage === 'metadataProxy') return 'Retrying via worker…';
+    if (stage === 'ai') return 'Oops! Metadata unavailable—asking AI…';
+    return 'Working…';
+  };
+
+  const loadingIcon = () => {
+    if (!loading()) return 'travel_explore';
+    return loadingStage() === 'ai' ? 'auto_fix_high' : 'hourglass_empty';
+  };
 
   const loadCitations = async () => {
     const items = await db.citations.orderBy('createdAt').reverse().toArray();
@@ -334,10 +552,20 @@ const SimpleCite: Component = () => {
     setModalOpen(true);
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyCitationPayload = async (payload: CitationResult | string) => {
+    const text = typeof payload === 'string' ? payload : payload.text;
+    const html = typeof payload === 'string' ? '' : payload.html;
     if (!text) return;
     try {
-      await navigator.clipboard?.writeText(text);
+      if (typeof ClipboardItem !== 'undefined' && html && navigator.clipboard?.write) {
+        const item = new ClipboardItem({
+          'text/plain': new Blob([text], { type: 'text/plain' }),
+          'text/html': new Blob([html], { type: 'text/html' }),
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard?.writeText(text);
+      }
       setStatus('Copied citation to clipboard.');
     } catch {
       setStatus('Clipboard permissions blocked—select the text manually.');
@@ -440,19 +668,47 @@ const SimpleCite: Component = () => {
   const citation = () => formatCitation(meta(), guideline());
 
   const handleSave = async () => {
-    const text = citation();
-    if (!text) {
+    const cite = citation();
+    if (!cite.text) {
       setStatus('Fill in at least a title or URL before saving.');
       return;
     }
     await db.citations.add({
       style: guideline(),
-      text,
+      text: cite.text,
       meta: JSON.stringify(meta()),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    setLoading(true);
+    setLoadingStage('metadata');
+    setStatus('Getting metadata…');
     });
     await loadCitations();
+      const initialAttempt = await gatherMetadataFromSource(targetUrl);
+      if (initialAttempt.meta) {
+        metaResult = initialAttempt.meta;
+      } else {
+        setLoadingStage('metadataProxy');
+        setStatus(
+          initialAttempt.blocked
+            ? 'Metadata blocked by CORS—retrying via anything.rhenrywarren.workers.dev…'
+            : 'Metadata looked empty—retrying via anything.rhenrywarren.workers.dev…',
+        );
+        const proxyAttempt = await gatherMetadataFromSource(targetUrl, true);
+        if (proxyAttempt.meta) {
+          metaResult = proxyAttempt.meta;
+        }
+      }
+
+      if (metaResult) {
+        const merged = mergeMetadataWithDefaults(metaResult, targetUrl);
+        setMeta(merged);
+        setStatus('Metadata loaded. Double-check the fields before saving.');
+        setEngine('simplecite');
+        return;
+      }
+
+      setLoadingStage('ai');
+      setStatus('Oops! Metadata unavailable—asking AI…');
+      let markdown: string | null = null;
     setModalOpen(false);
     setStatus('Citation saved—use Copy whenever you need it.');
   };
@@ -461,6 +717,7 @@ const SimpleCite: Component = () => {
     guidelineOptions.find((option) => option.value === guideline()) || guidelineOptions[0];
 
   return (
+      setStatus('Oops! Metadata unavailable—asking AI… Pulling a readable version of the page…');
     <div class={styles.container}>
       <div class={styles.header}>
         <div>
@@ -523,7 +780,7 @@ const SimpleCite: Component = () => {
             <div class={styles.list}>
               <For each={citations()}>
                 {(c) => (
-                  <div class={styles.listItem} onClick={() => copyToClipboard(c.text)}>
+                  <div class={styles.listItem} onClick={() => copyCitationPayload(c.text)}>
                     <div class={styles.listInfo}>
                       <div class={styles.listStyle}>{guidelineLabel(c.style)}</div>
                       <div class={styles.listText}>{c.text}</div>
@@ -532,7 +789,7 @@ const SimpleCite: Component = () => {
                       class={styles.copyButton}
                       onClick={(event) => {
                         event.stopPropagation();
-                        copyToClipboard(c.text);
+                        copyCitationPayload(c.text);
                       }}
                     >
                       <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
@@ -540,23 +797,13 @@ const SimpleCite: Component = () => {
                     </button>
                   </div>
                 )}
-              </For>
-            </div>
-          </Show>
-          <div class={styles.status}>{status()}</div>
-        </div>
-        <div class={styles.quickPanel}>
-          <div class={styles.quickCard}>
-            <div class={styles.cardTitle}>Just need the cite?</div>
-            <p class={styles.cardBody}>
-              Choose a guideline, let SimpleCite grab the details, or flip to manual mode when you
-              already know them.
-            </p>
-            <div class={styles.pills}>
-              <For each={guidelineOptions}>
-                {(option) => (
+                const merged = mergeMetadataWithDefaults(metaResult, targetUrl);
+                setMeta(merged);
+                setStatus('Metadata loaded via SimpleCite AI. Double-check the fields before saving.');
+                setEngine('simplecite');
                   <span class={styles.pill}>{option.label}</span>
                 )}
+                setLoadingStage('idle');
               </For>
             </div>
             <button class={`${styles.button} ${styles.buttonPrimary}`} onClick={startNewCitation}>
@@ -708,9 +955,9 @@ const SimpleCite: Component = () => {
                         onClick={runSimpleCite}
                       >
                         <span class="material-symbols-outlined" aria-hidden="true">
-                          {loading() ? 'hourglass_empty' : 'travel_explore'}
+                          {loadingIcon()}
                         </span>
-                        <span>{loading() ? 'Working…' : 'Fetch metadata'}</span>
+                        <span>{loadingLabel()}</span>
                       </button>
                     </div>
                   </div>
@@ -732,12 +979,15 @@ const SimpleCite: Component = () => {
                 <div class={styles.helperText}>{selectedGuideline().helper}</div>
                 <div class={styles.previewBox}>
                   <div class={styles.previewTitle}>Formatted citation</div>
-                  <div class={styles.citationLine}>{citation() || 'Start typing to see the cite.'}</div>
+                  <div
+                    class={styles.citationLine}
+                    innerHTML={citation().html || 'Start typing to see the cite.'}
+                  />
                   <div class={styles.previewActions}>
                     <button
                       class={styles.button}
-                      disabled={!citation()}
-                      onClick={() => copyToClipboard(citation())}
+                      disabled={!citation().text}
+                      onClick={() => copyCitationPayload(citation())}
                     >
                       <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
                       <span>Copy preview</span>
