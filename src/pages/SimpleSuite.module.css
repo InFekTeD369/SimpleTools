@@ -1,0 +1,141 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-left: 60px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--text-color);
+  background-color: var(--sidebar-color);
+}
+
+.tabButton {
+  background: var(--bg-color);
+  border: 1px solid var(--text-color);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.tabButtonActive {
+  background: var(--main-color);
+  color: var(--bg-color);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--text-color);
+  padding: 0.75rem;
+  background: transparent;
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.toolButton {
+  background: var(--bg-color);
+  border: 1px solid var(--text-color);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.toolButton:hover {
+  background: var(--main-color);
+  color: var(--bg-color);
+}
+
+.stats {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+}
+
+.outputBox {
+  flex: 1;
+  border: 1px solid var(--text-color);
+  padding: 0.75rem;
+  overflow: auto;
+  background: transparent;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.smallInput {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--text-color);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.85rem;
+}
+
+.fileInput {
+  margin-bottom: 0.5rem;
+}
+
+.fileList {
+  flex: 1;
+  border: 1px solid var(--text-color);
+  padding: 0.5rem;
+  overflow: auto;
+  font-size: 0.8rem;
+}
+
+.canvasWrapper {
+  border: 1px solid var(--text-color);
+  background: var(--bg-color);
+}
+
+.canvasToolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.colorInput {
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--text-color);
+  background: transparent;
+}
+
+.rangeInput {
+  flex: 1;
+}
+
+

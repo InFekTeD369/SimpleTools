@@ -1,0 +1,9 @@
+name: Light
+mainColor: "#e0e0e0"
+color2: "#d0d0d0"
+backgroundColor: "#ffffff"
+textColor: "#111111"
+secondTextColor: "#555555"
+sidebarColor: "#f5f5f5"
+accentColor: "#cccccc"
+

@@ -1,0 +1,162 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding-left: 60px;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--sidebar-color);
+    border-bottom: 1px solid var(--text-color);
+}
+
+.toolbarLeft {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toolButton {
+    background: var(--bg-color);
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 2px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.count {
+    font-size: 0.85rem;
+}
+
+.toolButton:hover {
+    background-color: var(--main-color);
+    color: var(--bg-color);
+}
+
+.projectName {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.projectsList {
+    background-color: var(--sidebar-color);
+    border-bottom: 1px solid var(--text-color);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.projectsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--text-color);
+}
+
+.projectsHeader h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.projectsHeader button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.projectItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.15s;
+}
+
+.projectItem:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.projectItem.active {
+    background-color: var(--main-color);
+    color: var(--bg-color);
+}
+
+.projectItemName {
+    flex: 1;
+}
+
+.deleteButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.projectItem:hover .deleteButton {
+    opacity: 1;
+}
+
+.editorContainer {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--text-color);
+}
+
+.preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    padding: 0.5rem 1rem;
+    background-color: var(--sidebar-color);
+    border-bottom: 1px solid var(--text-color);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.textarea {
+    flex: 1;
+    resize: none;
+    border: none;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.textarea:focus {
+    outline: none;
+}
+
+.iframe {
+    flex: 1;
+    border: none;
+    background-color: white;
+}

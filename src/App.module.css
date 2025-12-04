@@ -1,0 +1,53 @@
+.homeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Funnel Sans', sans-serif;
+  position: relative;
+}
+
+.homeTitle {
+  font-weight: 800;
+  font-size: 5rem;
+  margin: 0;
+  color: var(--text-color);
+  letter-spacing: -0.02em;
+}
+
+.homeDotLol {
+  font-size: 0.4em;
+  display: inline-block;
+  vertical-align: baseline;
+  margin-left: 0.1em;
+  position: relative;
+  top: 0.00em;
+}
+
+.arrowContainer {
+  position: fixed;
+  top: 3.5rem;
+  left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  opacity: 0.7;
+}
+
+.arrow {
+  width: 60px;
+  height: 60px;
+  color: var(--text-color);
+  margin-left: 0.5rem;
+}
+
+.arrowText {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-color);
+  white-space: nowrap;
+  margin-left: 0.5rem;
+}

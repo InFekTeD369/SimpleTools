@@ -1,0 +1,198 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.35);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+.modal {
+    background: var(--bg-color);
+    border: 1px solid rgba(0,0,0,0.4);
+    padding: 2rem;
+    min-width: 400px;
+    max-width: 90%;
+    animation: popIn 0.2s ease-out;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.themeGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.themeButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+.themeButton.active {
+    border: 1px solid var(--main-color);
+    background-color: var(--sidebar-color);
+}
+.preview {
+    width: 60px;
+    height: 40px;
+    position: relative;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+.closeButton {
+    margin-top: 2rem;
+    width: 100%;
+}
+
+.section {
+    margin-top: 1.5rem;
+}
+
+.createRow {
+    margin-top: 1rem;
+}
+
+.creator {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--text-color);
+}
+
+.creatorRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.creatorRow input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+}
+
+.creatorGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.creatorGrid label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.creatorGrid input[type="color"] {
+    width: 100%;
+    height: 32px;
+    padding: 0;
+    border-radius: 2px;
+    border: 1px solid var(--text-color);
+}
+
+.creatorButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.dataRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.dataButton {
+    background: var(--bg-color);
+    border: 1px solid var(--text-color);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.dataButtonDanger {
+    background: #3b0000;
+    border: 1px solid #ff4444;
+    color: #ffdddd;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.fileInput {
+    display: none;
+}
+
+.dangerOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.7);
+    z-index: 2100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dangerModal {
+    background: #220000;
+    border: 2px solid #ff4444;
+    color: #ffdddd;
+    padding: 2rem;
+    max-width: 480px;
+    width: 90%;
+}
+
+.dangerInput {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ff7777;
+    background: #330000;
+    color: #ffdddd;
+}
+
+.dangerButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.dangerCancel {
+    background: transparent;
+    border: 1px solid #ffdddd;
+    color: #ffdddd;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+}
+
+.dangerConfirm {
+    background: #ff4444;
+    border: 1px solid #ffbbbb;
+    color: #220000;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+}
+
+.dangerConfirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+

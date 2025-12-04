@@ -1,0 +1,28 @@
+{
+  "name": "simpletools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@solidjs/router": "^0.15.4",
+    "@types/js-yaml": "^4.0.9",
+    "clsx": "^2.1.1",
+    "dexie": "^4.2.1",
+    "js-yaml": "^4.1.1",
+    "jszip": "^3.10.1",
+    "lz-string": "^1.5.0",
+    "marked": "^17.0.1",
+    "solid-js": "^1.9.10"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-solid": "^2.11.10"
+  }
+}

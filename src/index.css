@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300..800;1,300..800&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+:root {
+  --main-color: #88b04b;
+  --color-2: #f0f8ff;
+  --bg-color: #f7fcf5;
+  --text-color: #2e3b2e;
+  --text-2-color: #556b4a;
+  --sidebar-color: #e6f0e6;
+  --accent-color: #aadd88;
+  
+  font-family: 'Funnel Sans', 'Nunito', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  border-radius: 2px;
+  border: 1px solid var(--text-color);
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+button:hover {
+  background-color: var(--main-color);
+  color: var(--bg-color); /* Assuming main color is dark enough or light enough to contrast, or we might need a specific contrast color */
+}
+
+input, textarea, select {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--text-color);
+  padding: 0.5em;
+  border-radius: 2px;
+  font-family: inherit;
+}
+
+input:focus, textarea:focus {
+  outline: 2px solid var(--main-color);
+  outline-offset: -2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--main-color);
+  border-radius: 4px;
+}
+
+a {
+  color: var(--main-color);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
