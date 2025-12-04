@@ -75,39 +75,6 @@ const formatCitation = (meta: Metadata, style: CiteStyle) => {
   return parts.join(' • ');
 };
 
-const parseHtmlMetadata = (html: string, url: string): Partial<Metadata> => {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const getMeta = (selector: string) =>
-    doc.querySelector(selector)?.getAttribute('content') || '';
-  const title =
-    getMeta('meta[property="og:title"]') ||
-    getMeta('meta[name="citation_title"]') ||
-    doc.querySelector('title')?.textContent ||
-    '';
-  const author =
-    getMeta('meta[name="author"]') ||
-    getMeta('meta[name="citation_author"]') ||
-    '';
-  const site =
-    getMeta('meta[property="og:site_name"]') || new URL(url).hostname;
-  const publisher =
-    getMeta('meta[name="publisher"]') ||
-    getMeta('meta[name="citation_journal_title"]') ||
-    '';
-  const dateRaw =
-    getMeta('meta[name="date"]') ||
-    getMeta('meta[property="article:published_time"]') ||
-    '';
-  const year = dateRaw ? dateRaw.slice(0, 4) : '';
-  return {
-    title: title.trim(),
-    author: author.trim(),
-    site: site.trim(),
-    publisher: publisher.trim(),
-    year,
-  };
-};
-
 const SimpleCite: Component = () => {
   const [mode, setMode] = createSignal<Mode>('smart');
   const [style, setStyle] = createSignal<CiteStyle>('simple');
