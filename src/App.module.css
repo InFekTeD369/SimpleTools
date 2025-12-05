@@ -114,6 +114,12 @@
   opacity: 0.8;
 }
 
+.contactLink:hover {
+  background: none;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
 .contactOverlay {
   position: fixed;
   inset: 0;
