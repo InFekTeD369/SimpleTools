@@ -170,9 +170,13 @@ const HtmlViewer: Component = () => {
               >
                 <span class={styles.projectItemName}>{project.name}</span>
                 <button 
-                  class={styles.deleteButton}
+                  class={styles.projectDeleteButton}
                   onClick={(e) => deleteProject(project.id!, e)}
-                >×</button>
+                  title="Delete"
+                  type="button"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                </button>
               </div>
             )}
           </For>

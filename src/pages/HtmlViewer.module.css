@@ -98,18 +98,19 @@
     flex: 1;
 }
 
-.deleteButton {
+.projectDeleteButton {
     background: none;
     border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
     color: inherit;
-    opacity: 0;
-    transition: opacity 0.2s;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.projectItem:hover .deleteButton {
-    opacity: 1;
+.projectDeleteButton .material-symbols-outlined {
+    font-size: 18px;
 }
 
 .editorContainer {
