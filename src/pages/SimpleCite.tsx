@@ -803,7 +803,7 @@ const SimpleCite: Component = () => {
             try {
               const prompt = buildMetadataPrompt(chunk, targetUrl);
               const llm = await fetch(
-                `https://text.pollinations.ai/${encodeURIComponent(prompt)}`,
+                `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-fast`,
                 {
                   headers: { Accept: 'text/plain' },
                 },
