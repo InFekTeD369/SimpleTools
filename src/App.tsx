@@ -1,4 +1,4 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { initTheme } from './store/themeStore';
@@ -8,6 +8,10 @@ import SimpleSuite, { type SuiteTab } from './pages/SimpleSuite';
 import TextLink from './pages/TextLink';
 import SimpleCite from './pages/SimpleCite';
 import styles from './App.module.css';
+import {
+  applyPendingServiceWorkerUpdate,
+  subscribeToServiceWorkerUpdates,
+} from './swClient';
 
 interface HomeProps {
   onOpenContact: () => void;
@@ -104,6 +108,8 @@ function App() {
   const [contactOpen, setContactOpen] = createSignal(false);
   const [buildVersion, setBuildVersion] = createSignal('');
   const [buildLink, setBuildLink] = createSignal('');
+  const [updateReady, setUpdateReady] = createSignal(false);
+  const [updateDismissed, setUpdateDismissed] = createSignal(false);
   const initial = parseRoute();
   const [currentPage, setCurrentPage] = createSignal<PageKey>(initial.page);
   const [suiteTab, setSuiteTab] = createSignal<SuiteTab>(initial.suiteTab);
@@ -116,6 +122,10 @@ function App() {
       setSuiteTab(route.suiteTab);
     };
     window.addEventListener('popstate', handlePopState);
+     const unsubscribeUpdates = subscribeToServiceWorkerUpdates(() => {
+       setUpdateDismissed(false);
+       setUpdateReady(true);
+     });
     const loadVersion = async () => {
       try {
         const response = await fetch(
@@ -142,6 +152,7 @@ function App() {
     return () => {
       controller.abort();
       window.removeEventListener('popstate', handlePopState);
+       unsubscribeUpdates();
     };
   });
 
@@ -174,6 +185,17 @@ function App() {
     if (page === 'text-link') return <TextLink />;
     if (page === 'cite') return <SimpleCite />;
     return <Home onOpenContact={() => setContactOpen(true)} />;
+  };
+
+  const showUpdateBanner = () => updateReady() && !updateDismissed();
+
+  const handleReloadNow = () => {
+    setUpdateReady(false);
+    applyPendingServiceWorkerUpdate();
+  };
+
+  const handleUpdateLater = () => {
+    setUpdateDismissed(true);
   };
 
   return (
@@ -217,6 +239,22 @@ function App() {
           )}
         </div>
       )}
+      <Show when={showUpdateBanner()}>
+        <div class={styles.updateBanner} role="status" aria-live="polite">
+          <div class={styles.updateBannerText}>
+            <strong>New version ready</strong>
+            <span>Reload to get the latest tools.</span>
+          </div>
+          <div class={styles.updateBannerButtons}>
+            <button type="button" class={styles.updateButtonPrimary} onClick={handleReloadNow}>
+              Reload
+            </button>
+            <button type="button" class={styles.updateButtonGhost} onClick={handleUpdateLater}>
+              Later
+            </button>
+          </div>
+        </div>
+      </Show>
     </>
   );
 }

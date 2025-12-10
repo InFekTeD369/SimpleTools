@@ -12,8 +12,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting()),
+      .then((cache) => cache.addAll(CORE_ASSETS)),
   );
 });
 
@@ -46,4 +45,10 @@ self.addEventListener('fetch', (event) => {
         );
     }),
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

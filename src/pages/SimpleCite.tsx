@@ -850,11 +850,12 @@ const SimpleCite: Component = () => {
       }
 
       setStatus('Could not auto-extract. Try the manual option like on MyBib.');
-      if (metaResult) {
-        setMeta({ ...emptyMeta, ...metaResult, url: metaResult.url || targetUrl });
-      } else {
-        setMeta({ ...emptyMeta, url: targetUrl });
-      }
+      const fallbackMeta: Partial<Metadata> = metaResult ?? {};
+      setMeta({
+        ...emptyMeta,
+        ...fallbackMeta,
+        url: fallbackMeta.url || targetUrl,
+      });
       setEngine('manual');
       return;
     } finally {

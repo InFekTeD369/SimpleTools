@@ -2,6 +2,7 @@
 import { render } from 'solid-js/web';
 import './index.css';
 import App from './App';
+import { registerServiceWorker } from './swClient';
 
 const root = document.getElementById('root');
 
@@ -13,10 +14,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 
 render(() => <App />, root!);
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      console.error('Service worker registration failed', error);
-    });
-  });
-}
+registerServiceWorker();

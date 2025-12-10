@@ -188,6 +188,70 @@
   text-decoration: underline;
 }
 
+.updateBanner {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: var(--bg-color);
+  border: 2px solid var(--text-color);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: min(420px, 90vw);
+  box-shadow: 8px 8px 0 var(--sidebar-color);
+  z-index: 2300;
+}
+
+.updateBannerText {
+  display: flex;
+  flex-direction: column;
+  font-family: 'Funnel Sans', sans-serif;
+  color: var(--text-color);
+  line-height: 1.2;
+}
+
+.updateBannerText strong {
+  font-size: 1rem;
+}
+
+.updateBannerText span {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.updateBannerButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.updateBannerButtons button {
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.updateButtonPrimary {
+  background: var(--text-color);
+  color: var(--bg-color);
+  border: 2px solid var(--text-color);
+}
+
+.updateButtonGhost {
+  background: transparent;
+  color: var(--text-color);
+  border: 2px solid var(--text-color);
+}
+
+.updateButtonPrimary:hover,
+.updateButtonGhost:hover {
+  opacity: 0.85;
+}
+
 @keyframes contactPop {
   from {
     transform: translateY(1rem) scale(0.97);
