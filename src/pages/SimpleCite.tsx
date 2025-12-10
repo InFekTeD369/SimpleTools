@@ -130,17 +130,23 @@ const buildCitationResult = (
   return { text, html };
 };
 
-const MAX_CONTEXT_CHARS = 1200;
-
 const sanitizeContext = (value: string) =>
   value
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+const POLLINATIONS_CHUNK_SIZE = 4999;
 
-const clampContext = (value: string) =>
-  value.length > MAX_CONTEXT_CHARS ? value.slice(0, MAX_CONTEXT_CHARS) : value;
+const splitContextIntoChunks = (value: string, size = POLLINATIONS_CHUNK_SIZE) => {
+  const sanitized = sanitizeContext(value);
+  if (!sanitized) return [];
+  const chunks: string[] = [];
+  for (let index = 0; index < sanitized.length; index += size) {
+    chunks.push(sanitized.slice(index, index + size));
+  }
+  return chunks.length ? chunks : [];
+};
 
 const tryParseJson = (payload: string) => {
   try {
@@ -183,16 +189,38 @@ const normalizeMetadata = (data: Partial<Metadata> | null | undefined): Partial<
   return cleaned;
 };
 
-const isMetadataComplete = (data: Partial<Metadata> | null | undefined) => {
-  if (!data) return false;
-  const normalized = normalizeMetadata(data);
-  const keys: (keyof Metadata)[] = ['title', 'author', 'year', 'publisher', 'site'];
-  return keys.every((key) => Boolean(normalized[key]));
-};
-
 const hasMeaningfulMetadata = (data: Partial<Metadata> | null | undefined) => {
   if (!data) return false;
   return Boolean(data.title || data.author || data.site || data.publisher);
+};
+
+const mergeMetadataValues = (
+  current: Partial<Metadata> | null,
+  incoming: Partial<Metadata> | null,
+): Partial<Metadata> | null => {
+  if (!incoming) return current;
+  const merged: Partial<Metadata> = { ...(current || {}) };
+  (Object.keys(incoming) as (keyof Metadata)[]).forEach((key) => {
+    const value = incoming[key];
+    if (typeof value === 'string' && value.trim()) {
+      merged[key] = value.trim();
+    }
+  });
+  return merged;
+};
+
+const metadataIsSufficient = (
+  data: Partial<Metadata> | null | undefined,
+  options?: { requireAuthor?: boolean },
+) => {
+  if (!data) return false;
+  const hasTitle = Boolean(data.title);
+  const hasOrigin = Boolean(data.site || data.publisher || data.url);
+  const hasAuthor = Boolean(data.author);
+  if (options?.requireAuthor) {
+    return hasTitle && hasOrigin && hasAuthor;
+  }
+  return hasTitle && hasOrigin;
 };
 
 const hostnameFromUrl = (value: string) => {
@@ -202,6 +230,107 @@ const hostnameFromUrl = (value: string) => {
   } catch {
     return '';
   }
+};
+
+type JsonLdEntry = Record<string, unknown>;
+
+const flattenJsonLdNodes = (value: unknown): JsonLdEntry[] => {
+  const entries: JsonLdEntry[] = [];
+  const visit = (node: unknown) => {
+    if (!node) return;
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (typeof node === 'object') {
+      const record = node as JsonLdEntry;
+      entries.push(record);
+      if (record['@graph']) {
+        visit(record['@graph']);
+      }
+    }
+  };
+  visit(value);
+  return entries;
+};
+
+const extractJsonLdText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+const extractJsonLdAuthors = (value: unknown): string => {
+  const nodes = Array.isArray(value) ? value : value ? [value] : [];
+  return nodes
+    .map((entry) => {
+      if (typeof entry === 'string') return entry;
+      if (entry && typeof entry === 'object') {
+        const node = entry as JsonLdEntry;
+        if (typeof node.name === 'string') return node.name;
+        if (typeof node['@name'] === 'string') return node['@name'] as string;
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join('; ');
+};
+
+const parseJsonLdMetadata = (doc: Document, originalUrl: string): Partial<Metadata> => {
+  const scripts = Array.from(doc.querySelectorAll('script[type="application/ld+json"]'));
+  const articleTypes = ['article', 'newsarticle', 'blogposting', 'webpage', 'creativework'];
+  for (const script of scripts) {
+    const content = script.textContent?.trim();
+    if (!content) continue;
+    try {
+      const parsed = JSON.parse(content);
+      const entries = flattenJsonLdNodes(parsed);
+      const candidate = entries.find((entry) => {
+        const typeField = entry['@type'];
+        const typeValues = Array.isArray(typeField) ? typeField : typeField ? [typeField] : [];
+        return typeValues.some(
+          (value) => typeof value === 'string' && articleTypes.includes(value.toLowerCase()),
+        );
+      });
+      if (!candidate) continue;
+
+      const title =
+        extractJsonLdText(candidate.headline) ||
+        extractJsonLdText(candidate.name) ||
+        extractJsonLdText(candidate.alternativeHeadline);
+
+      const author = extractJsonLdAuthors(candidate.author || candidate.creator);
+
+      let publisher = '';
+      if (typeof candidate.publisher === 'string') {
+        publisher = candidate.publisher;
+      } else if (candidate.publisher && typeof candidate.publisher === 'object') {
+        const pub = candidate.publisher as JsonLdEntry;
+        publisher = extractJsonLdText(pub.name) || extractJsonLdText(pub.legalName);
+      }
+
+      let site = publisher;
+      if (!site && candidate.isPartOf && typeof candidate.isPartOf === 'object') {
+        const part = candidate.isPartOf as JsonLdEntry;
+        site = extractJsonLdText(part.name);
+      }
+
+      const year =
+        extractJsonLdText(candidate.datePublished) ||
+        extractJsonLdText(candidate.dateModified) ||
+        '';
+
+      const jsonMeta: Partial<Metadata> = {
+        title,
+        author,
+        publisher,
+        site: site || hostnameFromUrl(originalUrl),
+        year,
+        url: extractJsonLdText(candidate.url) || originalUrl,
+      };
+
+      return normalizeMetadata(jsonMeta);
+    } catch {
+      // ignore invalid JSON-LD blocks and continue
+    }
+  }
+  return {};
 };
 
 const parseHtmlMetadata = (html: string, originalUrl: string): Partial<Metadata> => {
@@ -272,8 +401,9 @@ const parseHtmlMetadata = (html: string, originalUrl: string): Partial<Metadata>
     year: publishedRaw,
     url: originalUrl,
   };
-
-  return normalizeMetadata(result);
+  const jsonLd = parseJsonLdMetadata(doc, originalUrl);
+  const mergedResult = mergeMetadataValues(result, jsonLd) || result;
+  return normalizeMetadata(mergedResult);
 };
 
 const proxiedUrl = (target: string) =>
@@ -595,32 +725,46 @@ const SimpleCite: Component = () => {
     try {
       let metaResult: Partial<Metadata> | null = null;
 
+      const adoptMetadata = (candidate: Partial<Metadata> | null) => {
+        metaResult = mergeMetadataValues(metaResult, candidate);
+      };
+
+      const finishIfReady = (message: string, options?: { requireAuthor?: boolean }) => {
+        if (!metadataIsSufficient(metaResult, options)) return false;
+        const merged = mergeMetadataWithDefaults(metaResult || {}, targetUrl);
+        setMeta(merged);
+        setStatus(message);
+        setEngine('simplecite');
+        return true;
+      };
+
       const directAttempt = await gatherMetadataFromSource(targetUrl);
-      if (directAttempt.meta) {
-        metaResult = directAttempt.meta;
-      } else {
-        setLoadingStage('metadataProxy');
-        setStatus(
-          directAttempt.blocked
-            ? 'Metadata blocked by CORS—retrying via anything.rhenrywarren.workers.dev…'
-            : 'Metadata looked empty—retrying via anything.rhenrywarren.workers.dev…',
-        );
-        const proxyAttempt = await gatherMetadataFromSource(targetUrl, true);
-        if (proxyAttempt.meta) {
-          metaResult = proxyAttempt.meta;
-        }
+      adoptMetadata(directAttempt.meta);
+
+      if (finishIfReady('Metadata loaded. Double-check the fields before saving.', { requireAuthor: true })) {
+        return;
       }
 
-      if (metaResult && isMetadataComplete(metaResult)) {
-        const merged = mergeMetadataWithDefaults(metaResult, targetUrl);
-        setMeta(merged);
-        setStatus('Metadata loaded. Double-check the fields before saving.');
-        setEngine('simplecite');
+      setLoadingStage('metadataProxy');
+      setStatus(
+        directAttempt.meta
+          ? 'Metadata looked incomplete—retrying via anything.rhenrywarren.workers.dev…'
+          : directAttempt.blocked
+              ? 'Metadata blocked by CORS—retrying via anything.rhenrywarren.workers.dev…'
+              : 'Metadata looked empty—retrying via anything.rhenrywarren.workers.dev…',
+      );
+
+      const proxyAttempt = await gatherMetadataFromSource(targetUrl, true);
+      adoptMetadata(proxyAttempt.meta);
+
+      if (finishIfReady('Metadata loaded. Double-check the fields before saving.', { requireAuthor: true })) {
         return;
       }
 
       setLoadingStage('ai');
-      setStatus('Oops! Metadata unavailable—asking AI… Pulling a readable version of the page…');
+      setStatus(
+        'Metadata still missing key details—asking AI… Pulling a readable version of the page…',
+      );
       let markdown: string | null = null;
       const encodedTarget = encodeURIComponent(targetUrl);
       const jinaUrls = [
@@ -645,46 +789,74 @@ const SimpleCite: Component = () => {
       }
 
       if (markdown) {
-        const snippet = clampContext(sanitizeContext(markdown));
-        if (!snippet) {
+        const promptChunks = splitContextIntoChunks(markdown);
+        if (!promptChunks.length) {
           setStatus('Could not find readable content. Try the manual option.');
         } else {
-          setStatus('Extracting metadata with SimpleCite…');
-          const prompt = buildMetadataPrompt(snippet, targetUrl);
-          try {
-            const llm = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`, {
-              headers: { Accept: 'text/plain' },
-            });
-            if (llm.ok) {
+          let chunkResolved = false;
+          let lastPollinationsError = '';
+          for (let i = 0; i < promptChunks.length && !chunkResolved; i += 1) {
+            const chunk = promptChunks[i];
+            const chunkLabel =
+              promptChunks.length > 1 ? ` (${i + 1}/${promptChunks.length})` : '';
+            setStatus(`Extracting metadata with SimpleCite…${chunkLabel}`);
+            try {
+              const prompt = buildMetadataPrompt(chunk, targetUrl);
+              const llm = await fetch(
+                `https://text.pollinations.ai/${encodeURIComponent(prompt)}`,
+                {
+                  headers: { Accept: 'text/plain' },
+                },
+              );
+              if (!llm.ok) {
+                lastPollinationsError =
+                  'Pollinations is unavailable right now. Try again in a bit.';
+                continue;
+              }
               const raw = await llm.text();
               const parsed = normalizeMetadata(parseMetadataPayload(raw));
               if (Object.keys(parsed).length) {
-                metaResult = metaResult ? { ...metaResult, ...parsed } : parsed;
+                adoptMetadata(parsed);
+                if (metadataIsSufficient(metaResult)) {
+                  chunkResolved = true;
+                  break;
+                }
               } else {
-                setStatus('SimpleCite could not understand the response. Try again or switch to manual.');
+                lastPollinationsError =
+                  'SimpleCite could not understand the response. Try again or switch to manual.';
               }
-            } else {
-              setStatus('Pollinations is unavailable right now. Try again in a bit.');
+            } catch (error) {
+              console.error('SimpleCite metadata fetch failed', error);
+              lastPollinationsError = 'Could not reach the metadata service.';
             }
-          } catch (error) {
-            console.error('SimpleCite metadata fetch failed', error);
-            setStatus('Could not reach the metadata service.');
+          }
+
+          if (chunkResolved) {
+            if (finishIfReady('Metadata loaded via SimpleCite AI. Double-check the fields before saving.')) {
+              return;
+            }
+          } else if (lastPollinationsError) {
+            setStatus(lastPollinationsError);
           }
         }
       } else {
         setStatus('Could not load a readable version of the page. Try the manual option.');
       }
 
-      if (!metaResult || (!metaResult.title && !metaResult.site)) {
-        setStatus('Could not auto-extract. Try the manual option like on MyBib.');
-        setEngine('manual');
+      if (
+        finishIfReady('Metadata loaded via SimpleCite AI. Double-check the fields before saving.')
+      ) {
         return;
       }
 
-      const merged = mergeMetadataWithDefaults(metaResult, targetUrl);
-      setMeta(merged);
-      setStatus('Metadata loaded via SimpleCite AI. Double-check the fields before saving.');
-      setEngine('simplecite');
+      setStatus('Could not auto-extract. Try the manual option like on MyBib.');
+      if (metaResult) {
+        setMeta({ ...emptyMeta, ...metaResult, url: metaResult.url || targetUrl });
+      } else {
+        setMeta({ ...emptyMeta, url: targetUrl });
+      }
+      setEngine('manual');
+      return;
     } finally {
       setLoading(false);
       setLoadingStage('idle');
