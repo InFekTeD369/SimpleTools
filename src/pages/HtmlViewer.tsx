@@ -128,26 +128,26 @@ const HtmlViewer: Component = () => {
 
   return (
     <div class={styles.container}>
-      <div class={styles.toolbar}>
+      <div class={`panel-toolbar ${styles.toolbar}`}>
         <div class={styles.toolbarLeft}>
-          <button class={styles.toolButton} onClick={newProject} title="New">
+          <button class={`panel-toolbar-button ${styles.toolButton}`} onClick={newProject} title="New">
             <span class="material-symbols-outlined">add</span>
           </button>
           <button 
-            class={styles.toolButton} 
+            class={`panel-toolbar-button ${styles.toolButton}`} 
             onClick={() => setShowProjects(!showProjects())}
             title="Projects"
           >
             <span class="material-symbols-outlined">folder</span>
             <span class={styles.count}>({projects().length}/10)</span>
           </button>
-          <button class={styles.toolButton} onClick={saveProject} title="Save">
+          <button class={`panel-toolbar-button ${styles.toolButton}`} onClick={saveProject} title="Save">
             <span class="material-symbols-outlined">save</span>
           </button>
-          <button class={styles.toolButton} onClick={saveAsProject} title="Save As">
+          <button class={`panel-toolbar-button ${styles.toolButton}`} onClick={saveAsProject} title="Save As">
             <span class="material-symbols-outlined">save_as</span>
           </button>
-          <button class={styles.toolButton} onClick={openInNewTab} title="Open in New Tab">
+          <button class={`panel-toolbar-button ${styles.toolButton}`} onClick={openInNewTab} title="Open in New Tab">
             <span class="material-symbols-outlined">open_in_new</span>
           </button>
         </div>

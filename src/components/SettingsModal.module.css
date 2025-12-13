@@ -5,26 +5,26 @@
     z-index: 2000;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding: clamp(0.75rem, 2vw, 1.5rem);
+    align-items: center;
+    padding: clamp(0.75rem, 3vw, 2rem);
     backdrop-filter: blur(10px);
     overflow-y: auto;
 }
 .modal {
     background: var(--bg-color);
-    border: 1px solid rgba(0,0,0,0.4);
+    border: 2px solid var(--text-color);
     padding: clamp(1.25rem, 2.5vw, 2rem);
-    width: min(840px, 100%);
-    border-radius: 10px;
+    width: min(880px, 100%);
+    border-radius: 6px;
     animation: popIn 0.2s ease-out;
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    box-shadow: 12px 12px 0 var(--sidebar-color);
 }
 
 @keyframes popIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from { transform: translateY(8px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .themeGrid {
@@ -231,8 +231,10 @@
     border: 2px solid #ff4444;
     color: #ffdddd;
     padding: 2rem;
+    border-radius: 6px;
     max-width: 480px;
     width: 90%;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.75);
 }
 
 .dangerInput {
@@ -274,7 +276,7 @@
 
 @media (max-width: 720px) {
     .modal {
-        border-radius: 0.75rem;
+        border-radius: 6px;
         max-height: none;
     }
     .creatorGrid {

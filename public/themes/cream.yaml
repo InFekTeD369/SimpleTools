@@ -1,9 +1,9 @@
 name: Cream
-mainColor: "#e6dcc3"
-color2: "#d3c6a5"
-backgroundColor: "#fff8e7"
-textColor: "#5c4033"
-secondTextColor: "#8A6B5A"
-sidebarColor: "#faebd7"
-accentColor: "#f0e6cf"
+mainColor: "#D9C7A0"
+color2: "#C7B184"
+backgroundColor: "#FFF8E7"
+textColor: "#473325"
+secondTextColor: "#7B5B43"
+sidebarColor: "#F4E4CB"
+accentColor: "#E9D6AF"
 

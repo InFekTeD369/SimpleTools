@@ -159,32 +159,59 @@ const TextTools: Component = () => {
   return (
     <div class={styles.content}>
       <div class={styles.column}>
-        <div class={styles.toolbar}>
-          <button class={styles.toolButton} onClick={() => transform((s) => s.toUpperCase())}>
+        <div class={`panel-toolbar ${styles.toolbar}`}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={() => transform((s) => s.toUpperCase())}
+          >
             UPPERCASE
           </button>
-          <button class={styles.toolButton} onClick={() => transform((s) => s.toLowerCase())}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={() => transform((s) => s.toLowerCase())}
+          >
             lowercase
           </button>
-          <button class={styles.toolButton} onClick={() => transform(toTitleCase)}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={() => transform(toTitleCase)}
+          >
             Title Case
           </button>
-          <button class={styles.toolButton} onClick={removeDuplicates}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={removeDuplicates}
+          >
             Remove duplicates
           </button>
-          <button class={styles.toolButton} onClick={() => sortLines('asc')}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={() => sortLines('asc')}
+          >
             Sort A→Z
           </button>
-          <button class={styles.toolButton} onClick={() => sortLines('desc')}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={() => sortLines('desc')}
+          >
             Sort Z→A
           </button>
-          <button class={styles.toolButton} onClick={jsonBeautify}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={jsonBeautify}
+          >
             JSON pretty
           </button>
-          <button class={styles.toolButton} onClick={jsonMinify}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={jsonMinify}
+          >
             JSON minify
           </button>
-          <button class={styles.toolButton} onClick={simpleBeautify}>
+          <button
+            class={`panel-toolbar-button ${styles.toolButton}`}
+            onClick={simpleBeautify}
+          >
             HTML/CSS/JS beautify
           </button>
         </div>
@@ -279,9 +306,9 @@ ${localPass}
     <div class={styles.content}>
       <div class={styles.column}>
         
-        <div class={styles.toolbar}>
+        <div class={`panel-toolbar ${styles.toolbar}`}>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             disabled={humanizing()}
             onClick={handleHumanize}
@@ -289,7 +316,7 @@ ${localPass}
             {humanizing() ? `Humanizing (${elapsed().toFixed(1)}s)` : 'Humanize'}
           </button>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={handleCopy}
             aria-label="Copy humanized text"
@@ -533,9 +560,9 @@ const DrawPanel: Component = () => {
   return (
     <div class={styles.content}>
       <div class={styles.column}>
-        <div class={styles.toolbar}>
+        <div class={`panel-toolbar ${styles.toolbar}`}>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={newDrawing}
             title="New"
@@ -543,7 +570,7 @@ const DrawPanel: Component = () => {
             <span class="material-symbols-outlined">add</span>
           </button>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={() => setShowDrawings(!showDrawings())}
             title="Drawings"
@@ -552,7 +579,7 @@ const DrawPanel: Component = () => {
             <span class={styles.count}>({drawings().length}/10)</span>
           </button>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={saveDrawing}
             title="Save"
@@ -560,7 +587,7 @@ const DrawPanel: Component = () => {
             <span class="material-symbols-outlined">save</span>
           </button>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={saveAsDrawing}
             title="Save As"
@@ -568,7 +595,7 @@ const DrawPanel: Component = () => {
             <span class="material-symbols-outlined">save_as</span>
           </button>
           <button
-            class={styles.toolButton}
+            class={`panel-toolbar-button ${styles.toolButton}`}
             type="button"
             onClick={() => {
               let width = 600;
@@ -729,27 +756,35 @@ export const SimpleSuite: Component<SimpleSuiteProps> = (props) => {
 
   return (
     <div class={styles.container}>
-      <div class={styles.tabs}>
+      <div class={`panel-tabs ${styles.tabs}`}>
         <button
-          class={`${styles.tabButton} ${tab() === 'text' ? styles.tabButtonActive : ''}`}
+          class={`panel-tab ${styles.tabButton} ${
+            tab() === 'text' ? `panel-tabActive ${styles.tabButtonActive}` : ''
+          }`}
           onClick={() => selectTab('text')}
         >
           Text tools
         </button>
         <button
-          class={`${styles.tabButton} ${tab() === 'files' ? styles.tabButtonActive : ''}`}
+          class={`panel-tab ${styles.tabButton} ${
+            tab() === 'files' ? `panel-tabActive ${styles.tabButtonActive}` : ''
+          }`}
           onClick={() => selectTab('files')}
         >
           File preview
         </button>
         <button
-          class={`${styles.tabButton} ${tab() === 'human' ? styles.tabButtonActive : ''}`}
+          class={`panel-tab ${styles.tabButton} ${
+            tab() === 'human' ? `panel-tabActive ${styles.tabButtonActive}` : ''
+          }`}
           onClick={() => selectTab('human')}
         >
           AI Humanizer
         </button>
         <button
-          class={`${styles.tabButton} ${tab() === 'draw' ? styles.tabButtonActive : ''}`}
+          class={`panel-tab ${styles.tabButton} ${
+            tab() === 'draw' ? `panel-tabActive ${styles.tabButtonActive}` : ''
+          }`}
           onClick={() => selectTab('draw')}
         >
           Drawing

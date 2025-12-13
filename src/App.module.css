@@ -57,13 +57,14 @@
 
 .arrowContainer {
   position: fixed;
-  top: 3.5rem;
+  top: 4rem;
   left: 1.5rem;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.75rem;
   opacity: 0.7;
+  pointer-events: none;
 }
 
 .arrow {
@@ -78,7 +79,8 @@
   font-weight: 500;
   color: var(--text-color);
   white-space: nowrap;
-  margin-left: 0.5rem;
+  margin-left: -0.75rem;
+  margin-bottom: -0.1rem;
 }
 
 .contactRow {
