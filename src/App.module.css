@@ -180,6 +180,10 @@
   letter-spacing: 0.06em;
 }
 
+.versionBadgeStale {
+  color: #ff5f5f;
+}
+
 .versionBadge a {
   color: inherit;
   text-decoration: none;
@@ -188,6 +192,14 @@
 .versionBadge a:hover,
 .versionBadge a:focus-visible {
   text-decoration: underline;
+}
+
+.versionWarning {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  margin-top: 0.15rem;
 }
 
 .updateBanner {

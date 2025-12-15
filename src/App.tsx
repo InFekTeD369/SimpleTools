@@ -63,6 +63,15 @@ const Home = (props: HomeProps) => (
 type PageKey = 'home' | 'notebook' | 'html-viewer' | 'suite' | 'text-link' | 'cite';
 
 const defaultSuiteTab: SuiteTab = 'text';
+const IGNORED_COMMIT_MESSAGE = 'Add Current Version Hash (Not an Update)';
+
+interface GitHubCommit {
+  sha?: string;
+  html_url?: string;
+  commit?: {
+    message?: string;
+  };
+}
 
 const parseRoute = (): { page: PageKey; suiteTab: SuiteTab } => {
   if (typeof window === 'undefined') return { page: 'home', suiteTab: defaultSuiteTab };
@@ -108,6 +117,7 @@ function App() {
   const [contactOpen, setContactOpen] = createSignal(false);
   const [buildVersion, setBuildVersion] = createSignal('');
   const [buildLink, setBuildLink] = createSignal('');
+  const [isCurrentVersion, setIsCurrentVersion] = createSignal(true);
   const [updateReady, setUpdateReady] = createSignal(false);
   const [updateDismissed, setUpdateDismissed] = createSignal(false);
   const initial = parseRoute();
@@ -127,25 +137,57 @@ function App() {
        setUpdateReady(true);
      });
     const loadVersion = async () => {
+      let localShortHash = '';
+      try {
+        const response = await fetch('/commit.txt', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const contents = (await response.text()).trim();
+          const match = contents.match(/[0-9a-f]{8,40}/i);
+          if (match) {
+            const normalized = match[0].toLowerCase();
+            localShortHash = normalized.slice(0, 8);
+            setBuildVersion(localShortHash);
+            setBuildLink(`https://github.com/rhenryw/SimpleTools/commit/${normalized}`);
+          }
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to read local commit version', error);
+        }
+      }
+
       try {
         const response = await fetch(
-          'https://api.github.com/repos/rhenryw/SimpleTools/commits?per_page=1',
+          'https://api.github.com/repos/rhenryw/SimpleTools/commits?per_page=10',
           { signal: controller.signal },
         );
         if (!response.ok) return;
-        const data = await response.json();
-        const latest = Array.isArray(data) ? data[0] : null;
-        const sha = latest?.sha;
-        const htmlUrl = latest?.html_url;
-        if (typeof sha === 'string' && sha.length) {
-          setBuildVersion(sha.slice(0, 7));
-        }
-        if (typeof htmlUrl === 'string' && htmlUrl.length) {
+        const payload = await response.json();
+        const commits: GitHubCommit[] = Array.isArray(payload) ? (payload as GitHubCommit[]) : [];
+        const preferred = commits.find((entry) => entry?.commit?.message?.trim() !== IGNORED_COMMIT_MESSAGE);
+        const latest = preferred ?? commits[0];
+        if (!latest?.sha) return;
+        const latestShort = latest.sha.slice(0, 8).toLowerCase();
+        const htmlUrl = typeof latest.html_url === 'string'
+          ? latest.html_url
+          : `https://github.com/rhenryw/SimpleTools/commit/${latest.sha}`;
+        if (!buildLink()) {
           setBuildLink(htmlUrl);
+        }
+        if (!buildVersion() && latestShort) {
+          setBuildVersion(latestShort);
+        }
+        if (localShortHash && latestShort) {
+          setIsCurrentVersion(latestShort === localShortHash);
+        } else {
+          setIsCurrentVersion(true);
         }
       } catch (error) {
         if ((error as Error).name === 'AbortError') return;
-        console.error('Failed to load build version', error);
+        console.error('Failed to verify remote commit version', error);
       }
     };
     loadVersion();
@@ -228,7 +270,7 @@ function App() {
         {renderPage()}
       </main>
       {currentPage() === 'home' && (
-        <div class={styles.versionBadge}>
+        <div class={`${styles.versionBadge} ${!isCurrentVersion() ? styles.versionBadgeStale : ''}`}>
           {buildLink() ? (
             <a href={buildLink()} target="_blank" rel="noreferrer">
               Ver. {buildVersion() || '...'}
@@ -237,6 +279,9 @@ function App() {
             <>Ver. {buildVersion() || '...'}
             </>
           )}
+          <Show when={!isCurrentVersion()}>
+            <span class={styles.versionWarning}>Update available</span>
+          </Show>
         </div>
       )}
       <Show when={showUpdateBanner()}>
