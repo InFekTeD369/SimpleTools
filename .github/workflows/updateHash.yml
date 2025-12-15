@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main  # Change if needed
+permissions:
+  contents: write
 
 jobs:
   update-hash:
