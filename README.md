@@ -1,19 +1,19 @@
 # SimpleTools
 
-A collection of simple web tools built with SolidJS, Vite, and TypeScript.
+A compact suite of web tools crafted with SolidJS, Vite, and TypeScript.
 
 ## Features
-- **Notebook**: Markdown supported, auto-save to IndexedDB, organized by notebooks and pages.
-- **HTML Viewer**: Real-time preview of HTML/CSS/JS.
-- **Theming**: Custom YAML-based themes with live preview in settings.
-- **Speedy AI powered citation generator**: Super quick, faster than Scribr + MyBib
+- Notebook: Markdown support, auto-save to IndexedDB, organized by notebooks and pages.
+- HTML Previewer: Real-time preview of HTML/CSS/JS.
+- Theming: Custom YAML-driven themes with live preview in Settings.
+- Lightning-fast AI-powered citation generator: Ultra-quick, faster than Scribr + MyBib
 
 ## Setup
 1. `npm install`
 2. `npm run dev`
 
 ## Themes
-Themes are located in `public/themes/`. You can add your own YAML file there adhering to the schema:
+Themes live in `public/themes/`. Drop in your own YAML file there, following the schema:
 ```yaml
 name: MyTheme
 mainColor: "#hex"
